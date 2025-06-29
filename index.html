@@ -1,0 +1,791 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Home, User, Lock, Mail, MapPin, Calendar, CreditCard, CheckCircle, FileText, Truck, Bell, Filter, Utensils, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+
+// Mock Data
+const MOCK_MEALS = [
+    { id: 1, name: 'Paneer Butter Masala', description: 'Creamy and rich tomato-based curry with soft paneer cubes.', allergens: ['Dairy', 'Nuts'], category: 'Vegetarian' },
+    { id: 2, name: 'Chicken Biryani', description: 'Aromatic basmati rice cooked with chicken and spices.', allergens: [], category: 'Non-Vegetarian' },
+    { id: 3, name: 'Dal Makhani', description: 'Slow-cooked black lentils and kidney beans in a buttery, creamy sauce.', allergens: ['Dairy'], category: 'Vegetarian' },
+    { id: 4, name: 'Fish Curry', description: 'Tangy and spicy fish curry made with coconut milk.', allergens: ['Fish'], category: 'Non-Vegetarian' },
+    { id: 5, name: 'Aloo Gobi', description: 'A classic dry curry with potatoes and cauliflower.', allergens: [], category: 'Vegan' },
+    { id: 6, name: 'Mutton Rogan Josh', description: 'Aromatic lamb dish from Kashmir.', allergens: [], category: 'Non-Vegetarian' },
+    { id: 7, name: 'Vegan Korma', description: 'Mixed vegetables in a creamy cashew-based sauce.', allergens: ['Nuts'], category: 'Vegan' },
+    { id: 8, name: 'Gluten-Free Roti', description: 'Flatbread made from gluten-free flour.', allergens: [], category: 'Gluten-Free' },
+];
+
+const ALLERGENS_LIST = ['Dairy', 'Nuts', 'Fish', 'Gluten'];
+
+// --- Components ---
+
+// Generic Header Component
+const Header = ({ title, onBack }) => (
+    <header className="bg-white shadow-sm p-4 flex items-center sticky top-0 z-20">
+        {onBack && (
+            <button onClick={onBack} className="mr-4 p-2 rounded-full hover:bg-gray-100">
+                <ArrowLeft size={24} className="text-gray-600" />
+            </button>
+        )}
+        <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+    </header>
+);
+
+// User Registration/Login Component
+const UserAuth = ({ navigateTo, setUser }) => {
+    const [isLogin, setIsLogin] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const mockUser = { name: isLogin ? 'John Doe' : name, email };
+        setUser(mockUser);
+        navigateTo(isLogin ? 'SubscriptionPlan' : 'UserOnboarding');
+    };
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+            <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
+                <h1 className="text-4xl font-bold text-center text-yellow-400 mb-2">gharSe!</h1>
+                <h2 className="text-2xl font-semibold text-gray-700 text-center mb-6">{isLogin ? 'Welcome Back!' : 'Create Account'}</h2>
+                <form onSubmit={handleSubmit}>
+                    {!isLogin && (
+                        <div className="mb-4">
+                            <label className="block text-gray-600 mb-2" htmlFor="name">Name</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-10 p-3 border rounded-lg focus:ring-yellow-400 focus:border-yellow-400" placeholder="Your Name" required />
+                            </div>
+                        </div>
+                    )}
+                    <div className="mb-4">
+                        <label className="block text-gray-600 mb-2" htmlFor="email">Email</label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 p-3 border rounded-lg focus:ring-yellow-400 focus:border-yellow-400" placeholder="you@example.com" required />
+                        </div>
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-gray-600 mb-2" htmlFor="password">Password</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 p-3 border rounded-lg focus:ring-yellow-400 focus:border-yellow-400" placeholder="••••••••" required />
+                        </div>
+                    </div>
+                    <button type="submit" className="w-full bg-yellow-400 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-lg">
+                        {isLogin ? 'Login' : 'Register'}
+                    </button>
+                </form>
+                <p className="text-center text-gray-500 mt-6">
+                    {isLogin ? "Don't have an account?" : "Already have an account?"}
+                    <button onClick={() => setIsLogin(!isLogin)} className="text-yellow-500 font-semibold ml-2 hover:underline">
+                        {isLogin ? 'Sign Up' : 'Log In'}
+                    </button>
+                </p>
+                 <div className="text-center text-xs text-gray-400 mt-4">
+                    By continuing, you agree to our <button onClick={() => navigateTo('TermsAndConditions')} className="underline">Terms</button> and <button onClick={() => navigateTo('PrivacyPolicy')} className="underline">Privacy Policy</button>.
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// User Onboarding Component
+const UserOnboarding = ({ navigateTo, user }) => {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 text-center">
+            <div className="w-full max-w-lg bg-white rounded-lg shadow-xl p-8">
+                <h1 className="text-3xl font-bold text-gray-800 mb-4">Welcome to gharSe!, {user.name}!</h1>
+                <p className="text-gray-600 mb-6">We're excited to bring delicious, home-style meals right to your doorstep. Let's get you set up.</p>
+                <p className="text-gray-600 mb-8">First, let's choose a subscription plan that fits your lifestyle.</p>
+                <button onClick={() => navigateTo('SubscriptionPlan')} className="bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-lg">
+                    Let's Go!
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// Privacy Policy Page
+const PrivacyPolicy = ({ navigateTo }) => (
+    <div className="bg-gray-100 min-h-screen">
+        <Header title="Privacy Policy" onBack={() => navigateTo('UserAuth')} />
+        <div className="p-8 max-w-4xl mx-auto bg-white mt-8 rounded-lg shadow-md">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">1. Introduction</h2>
+            <p className="text-gray-700 mb-4">Welcome to gharSe! ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and services.</p>
+            
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">2. Information We Collect</h2>
+            <p className="text-gray-700 mb-4">We may collect the following types of information:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Personal Information:</strong> Name, email address, phone number, delivery address, and payment information.</li>
+                <li><strong>Account Credentials:</strong> Username and password for account creation and access.</li>
+                <li><strong>Location Data:</strong> Geolocation information to facilitate delivery services.</li>
+                <li><strong>Usage Data:</strong> Information about how you interact with our app, including access times, pages viewed, and app performance data.</li>
+                <li><strong>Device Information:</strong> Details about the device used to access our services, such as device type, operating system, and unique device identifiers.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">3. How We Use Your Information</h2>
+            <p className="text-gray-700 mb-4">We use the collected information to:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Provide and maintain our services.</li>
+                <li>Process transactions and send related information.</li>
+                <li>Communicate with you about orders, services, and promotional offers.</li>
+                <li>Improve our app and develop new features.</li>
+                <li>Ensure security and prevent fraudulent activities.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">4. Sharing Your Information</h2>
+            <p className="text-gray-700 mb-4">We may share your information with:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Service Providers:</strong> Third-party vendors who perform services on our behalf, such as payment processing and delivery services.</li>
+                <li><strong>Legal Requirements:</strong> When required by law or to respond to legal processes.</li>
+                <li><strong>Business Transfers:</strong> In connection with a merger, sale, or asset transfer.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">5. Data Security</h2>
+            <p className="text-gray-700 mb-4">We implement appropriate technical and organizational measures to protect your personal information from unauthorized access, use, or disclosure.</p>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">6. Your Rights and Choices</h2>
+            <p className="text-gray-700 mb-4">Depending on your location, you may have the right to:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Access the personal information we hold about you.</li>
+                <li>Request correction or deletion of your personal information.</li>
+                <li>Object to or restrict certain processing of your information.</li>
+                <li>Withdraw consent where processing is based on consent.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Contact Us</h2>
+            <p className="text-gray-700">If you have any questions or concerns about this Privacy Policy, please contact us at:</p>
+            <address className="not-italic mt-2 text-gray-700">
+                gharSe!<br />
+                Phoenix Palladium, Thane, Maharashtra<br />
+                contact@gharse.com<br />
+                +912345890671
+            </address>
+        </div>
+    </div>
+);
+
+// Terms and Conditions Page
+const TermsAndConditions = ({ navigateTo }) => (
+    <div className="bg-gray-100 min-h-screen">
+        <Header title="Terms and Conditions" onBack={() => navigateTo('UserAuth')} />
+        <div className="p-8 max-w-4xl mx-auto bg-white mt-8 rounded-lg shadow-md">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Acceptance of Terms</h2>
+            <p className="text-gray-700 mb-4">By registering or using the gharSe platform (website or mobile app), you confirm that you are at least 18 years old and legally capable of entering into binding contracts under Indian law.</p>
+            
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Services Offered</h2>
+            <p className="text-gray-700 mb-4">gharSe connects users with local home chefs and restaurants to deliver freshly prepared meals. We act as an intermediary, facilitating orders and payments between users and food providers. We do not prepare or deliver food ourselves.</p>
+            
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">User Responsibilities</h2>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Account Information:</strong> You agree to provide accurate and complete information when creating an account and placing orders.</li>
+                <li><strong>Compliance:</strong> You will use the platform in compliance with all applicable laws and regulations.</li>
+                <li><strong>Conduct:</strong> You will not engage in any fraudulent, abusive, or unlawful activity on the platform.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Ordering and Payment</h2>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Order Placement:</strong> Orders can be placed through our website or mobile app. All orders are subject to acceptance by gharSe and the respective food provider.</li>
+                <li><strong>Pricing:</strong> Prices are determined by the food providers and may include taxes and delivery charges. Prices are subject to change without notice.</li>
+                <li><strong>Payment Methods:</strong> We accept payments via credit/debit cards, UPI, net banking, and other methods as listed on our platform. Payments are processed through secure payment gateways.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Delivery</h2>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Delivery Partners:</strong> Deliveries are carried out by third-party delivery partners. Delivery times are estimates and may vary due to factors beyond our control.</li>
+                <li><strong>Delivery Address:</strong> You are responsible for providing an accurate delivery address. gharSe is not liable for delays or failures in delivery due to incorrect information.</li>
+                <li><strong>Delivery Instructions:</strong> For multi-story buildings, deliveries may be handed over to security personnel or left at designated areas as per your instructions.</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Cancellations and Refunds</h2>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Order Cancellation:</strong> You may cancel an order before it is accepted by the food provider. Once accepted, cancellations may not be possible.</li>
+                <li><strong>Refunds:</strong> Refunds are issued at the discretion of gharSe and in accordance with our refund policy. Refunds may not be available for meals that have already been prepared or dispatched.</li>
+            </ul>
+        </div>
+    </div>
+);
+
+
+// Subscription Plan Selection
+const SubscriptionPlan = ({ navigateTo, updateOrder }) => {
+    const plans = [
+        { name: 'Weekly', price: '499', meals: '7', description: 'Perfect for trying us out.' },
+        { name: 'Bi-Weekly', price: '899', meals: '14', description: 'A great balance for your routine.', popular: true },
+        { name: 'Monthly', price: '1699', meals: '30', description: 'Best value for daily meals.' },
+    ];
+
+    const selectPlan = (plan) => {
+        updateOrder('subscription', plan);
+        navigateTo('MealPlanBrowser');
+    };
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Choose Your Plan" />
+            <div className="p-4 md:p-8">
+                <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    {plans.map(plan => (
+                        <div key={plan.name} className={`bg-white rounded-xl shadow-lg p-6 flex flex-col border-2 ${plan.popular ? 'border-yellow-400' : 'border-transparent'}`}>
+                            {plan.popular && <span className="bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full self-start mb-4">POPULAR</span>}
+                            <h3 className="text-2xl font-bold text-gray-800">{plan.name}</h3>
+                            <p className="text-gray-500 mt-2 mb-4">{plan.description}</p>
+                            <p className="text-4xl font-extrabold text-gray-900 my-4">₹{plan.price}<span className="text-lg font-medium text-gray-500">/{plan.name.toLowerCase().replace('-','')}</span></p>
+                            <p className="text-gray-600 font-semibold mb-6">{plan.meals} Meals Included</p>
+                            <button onClick={() => selectPlan(plan)} className="mt-auto w-full bg-yellow-400 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-md">
+                                Choose Plan
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Meal Plan Browsing Component
+const MealPlanBrowser = ({ navigateTo, updateOrder, order }) => {
+    const [meals, setMeals] = useState(MOCK_MEALS);
+    const [selectedAllergens, setSelectedAllergens] = useState([]);
+    const [selectedMeals, setSelectedMeals] = useState(order.meals || []);
+
+    const toggleAllergen = (allergen) => {
+        setSelectedAllergens(prev =>
+            prev.includes(allergen) ? prev.filter(a => a !== allergen) : [...prev, allergen]
+        );
+    };
+
+    const toggleMealSelection = (meal) => {
+        setSelectedMeals(prev =>
+            prev.some(m => m.id === meal.id) ? prev.filter(m => m.id !== meal.id) : [...prev, meal]
+        );
+    };
+
+    const filteredMeals = meals.filter(meal =>
+        selectedAllergens.every(allergen => !meal.allergens.includes(allergen))
+    );
+    
+    const canProceed = selectedMeals.length > 0;
+
+    const handleNext = () => {
+        updateOrder('meals', selectedMeals);
+        navigateTo('AddressManagement');
+    };
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Browse Meals" onBack={() => navigateTo('SubscriptionPlan')} />
+            <div className="p-4 md:p-8 max-w-7xl mx-auto">
+                {/* Allergen Filter */}
+                <div className="bg-white p-4 rounded-lg shadow-md mb-8 sticky top-[81px] z-10">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center"><Filter size={20} className="mr-2 text-yellow-500"/>Filter by Allergens</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {ALLERGENS_LIST.map(allergen => (
+                            <button
+                                key={allergen}
+                                onClick={() => toggleAllergen(allergen)}
+                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedAllergens.includes(allergen) ? 'bg-yellow-400 text-gray-900' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                            >
+                                {allergen}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Meal Grid */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMeals.map(meal => (
+                        <div key={meal.id} className={`bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${selectedMeals.some(m => m.id === meal.id) ? 'ring-4 ring-yellow-300' : ''}`}>
+                            <div className="p-6">
+                                <h4 className="text-xl font-bold text-gray-800">{meal.name}</h4>
+                                <p className="text-gray-600 mt-2 h-12">{meal.description}</p>
+                                <div className="mt-4">
+                                    <span className={`inline-block rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2 ${meal.category === 'Vegetarian' ? 'bg-green-100 text-green-800' : meal.category === 'Non-Vegetarian' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
+                                        {meal.category}
+                                    </span>
+                                    {meal.allergens.length > 0 && (
+                                        <p className="text-xs text-red-500 mt-2">Allergens: {meal.allergens.join(', ')}</p>
+                                    )}
+                                </div>
+                                <button onClick={() => toggleMealSelection(meal)} className={`mt-4 w-full font-bold py-2 px-4 rounded-lg transition-colors ${selectedMeals.some(m => m.id === meal.id) ? 'bg-red-500 text-white' : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'}`}>
+                                    {selectedMeals.some(m => m.id === meal.id) ? 'Remove' : 'Add to Plan'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                 <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-20">
+                    <div className="max-w-7xl mx-auto flex justify-between items-center">
+                        <p className="font-semibold text-gray-700">{selectedMeals.length} meal(s) selected</p>
+                        <button 
+                            onClick={handleNext} 
+                            disabled={!canProceed}
+                            className="bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Address Management Component
+const AddressManagement = ({ navigateTo, updateOrder, order }) => {
+    const [addresses, setAddresses] = useState([
+        { id: 1, line1: '123, Tech Park Road', city: 'Bengaluru', pin: '560100', type: 'Home' },
+    ]);
+    const [selectedAddress, setSelectedAddress] = useState(order.address || null);
+    const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+    const [newAddress, setNewAddress] = useState({ line1: '', city: '', pin: '', type: 'Home' });
+
+    const handleSelectAddress = (address) => {
+        setSelectedAddress(address);
+    };
+    
+    const handleNewAddressChange = (e) => {
+        const { name, value } = e.target;
+        setNewAddress(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddNewAddress = (e) => {
+        e.preventDefault();
+        if (!newAddress.line1 || !newAddress.city || !newAddress.pin) {
+            console.error("Please fill all address fields");
+            return;
+        }
+        const newId = addresses.length > 0 ? Math.max(...addresses.map(a => a.id)) + 1 : 1;
+        setAddresses([...addresses, { id: newId, ...newAddress }]);
+        setNewAddress({ line1: '', city: '', pin: '', type: 'Home' });
+        setShowAddAddressForm(false);
+    };
+
+    const handleNext = () => {
+        updateOrder('address', selectedAddress);
+        navigateTo('DeliverySlotPicker');
+    };
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Select Delivery Address" onBack={() => navigateTo('MealPlanBrowser')} />
+            <div className="p-4 md:p-8 max-w-2xl mx-auto">
+                <div className="space-y-4">
+                    {addresses.map(address => (
+                        <div
+                            key={address.id}
+                            onClick={() => handleSelectAddress(address)}
+                            className={`p-4 bg-white rounded-lg shadow-md cursor-pointer border-2 transition-all ${selectedAddress?.id === address.id ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-transparent'}`}
+                        >
+                            <p className="font-bold text-lg text-gray-800 flex items-center">
+                                <MapPin size={20} className="mr-2 text-yellow-500"/> {address.type}
+                            </p>
+                            <p className="text-gray-600">{address.line1}</p>
+                            <p className="text-gray-600">{address.city}, {address.pin}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {!showAddAddressForm && (
+                    <button onClick={() => setShowAddAddressForm(true)} className="mt-6 w-full flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-200 hover:border-gray-400 transition">
+                        <PlusCircle size={20} className="mr-2"/> Add New Address
+                    </button>
+                )}
+                
+                {showAddAddressForm && (
+                    <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4">Add a New Address</h3>
+                        <form onSubmit={handleAddNewAddress}>
+                            <div className="mb-4">
+                                <label className="block text-gray-600 mb-2" htmlFor="line1">Address Line 1</label>
+                                <input type="text" name="line1" value={newAddress.line1} onChange={handleNewAddressChange} className="w-full p-3 border rounded-lg" required />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-gray-600 mb-2" htmlFor="city">City</label>
+                                    <input type="text" name="city" value={newAddress.city} onChange={handleNewAddressChange} className="w-full p-3 border rounded-lg" required />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-600 mb-2" htmlFor="pin">PIN Code</label>
+                                    <input type="text" name="pin" value={newAddress.pin} onChange={handleNewAddressChange} className="w-full p-3 border rounded-lg" required />
+                                </div>
+                            </div>
+                             <div className="mb-4">
+                                <label className="block text-gray-600 mb-2" htmlFor="type">Address Type</label>
+                                <select name="type" value={newAddress.type} onChange={handleNewAddressChange} className="w-full p-3 border rounded-lg bg-white">
+                                    <option>Home</option>
+                                    <option>Work</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end gap-4">
+                                <button type="button" onClick={() => setShowAddAddressForm(false)} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">Cancel</button>
+                                <button type="submit" className="bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">Save Address</button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                <div className="mt-8">
+                    <button 
+                        onClick={handleNext} 
+                        disabled={!selectedAddress}
+                        className="w-full bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                        Confirm Address
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Delivery Time Slot Picker
+const DeliverySlotPicker = ({ navigateTo, updateOrder, order }) => {
+    const timeSlots = ['9:00 AM - 11:00 AM', '1:00 PM - 3:00 PM', '6:00 PM - 8:00 PM'];
+    const [selectedSlot, setSelectedSlot] = useState(order.deliverySlot || null);
+    
+    const handleNext = () => {
+        updateOrder('deliverySlot', selectedSlot);
+        navigateTo('PaymentGateway');
+    };
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Pick a Delivery Slot" onBack={() => navigateTo('AddressManagement')} />
+            <div className="p-4 md:p-8 max-w-2xl mx-auto">
+                <div className="space-y-4">
+                    {timeSlots.map(slot => (
+                        <div
+                            key={slot}
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`p-4 bg-white rounded-lg shadow-md cursor-pointer border-2 transition-all ${selectedSlot === slot ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-transparent'}`}
+                        >
+                            <p className="font-semibold text-lg text-gray-700 flex items-center">
+                                <Calendar size={20} className="mr-2 text-yellow-500"/> {slot}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-8">
+                    <button 
+                        onClick={handleNext} 
+                        disabled={!selectedSlot}
+                        className="w-full bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                        Proceed to Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Payment Gateway Component
+const PaymentGateway = ({ navigateTo, order }) => {
+    const [processing, setProcessing] = useState(false);
+
+    const handlePayment = (e) => {
+        e.preventDefault();
+        setProcessing(true);
+        setTimeout(() => {
+            setProcessing(false);
+            navigateTo('OrderConfirmation');
+        }, 2000);
+    };
+
+    const totalAmount = parseFloat(order.subscription.price);
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Secure Payment" onBack={() => navigateTo('DeliverySlotPicker')} />
+            <div className="p-4 md:p-8 max-w-2xl mx-auto grid md:grid-cols-2 gap-8">
+                <div className="md:col-span-1">
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4 text-gray-800">Order Summary</h3>
+                        <div className="space-y-2 text-gray-600">
+                            <div className="flex justify-between">
+                                <span>{order.subscription.name} Plan</span>
+                                <span className="font-semibold">₹{order.subscription.price}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Delivery</span>
+                                <span className="font-semibold text-green-600">FREE</span>
+                            </div>
+                            <hr className="my-2"/>
+                            <div className="flex justify-between font-bold text-lg text-gray-800">
+                                <span>Total</span>
+                                <span>₹{totalAmount.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="md:col-span-1">
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl font-bold mb-4 text-gray-800">Payment Details</h3>
+                        <form onSubmit={handlePayment}>
+                            <div className="mb-4">
+                                <label className="block text-gray-600 mb-2" htmlFor="card">Card Number</label>
+                                <div className="relative">
+                                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                    <input type="text" id="card" className="w-full pl-10 p-3 border rounded-lg" placeholder="1234 5678 9101 1121" required />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label className="block text-gray-600 mb-2" htmlFor="expiry">Expiry</label>
+                                    <input type="text" id="expiry" className="w-full p-3 border rounded-lg" placeholder="MM/YY" required />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-600 mb-2" htmlFor="cvv">CVV</label>
+                                    <input type="text" id="cvv" className="w-full p-3 border rounded-lg" placeholder="123" required />
+                                </div>
+                            </div>
+                            <button type="submit" disabled={processing} className="w-full bg-yellow-400 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-lg disabled:bg-yellow-300 disabled:cursor-wait">
+                                {processing ? 'Processing...' : `Pay ₹${totalAmount.toFixed(2)}`}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Order Confirmation Screen
+const OrderConfirmation = ({ navigateTo, order, user, showNotification }) => {
+    useEffect(() => {
+        showNotification('Order Confirmed!', 'Your delicious meals are being prepared.');
+    }, [showNotification]);
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 text-center">
+            <div className="w-full max-w-lg bg-white rounded-lg shadow-xl p-8">
+                <CheckCircle size={64} className="text-green-500 mx-auto mb-4" />
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">Order Confirmed!</h1>
+                <p className="text-gray-600 mb-6">Thank you, {user.name}. Your order has been placed successfully.</p>
+                <div className="bg-gray-100 p-4 rounded-lg text-left mb-6">
+                    <p className="mb-2"><strong>Plan:</strong> {order.subscription.name}</p>
+                    <p className="mb-2"><strong>Delivering to:</strong> {order.address.line1}</p>
+                    <p><strong>Time Slot:</strong> {order.deliverySlot}</p>
+                </div>
+                <div className="flex justify-center gap-4">
+                    <button onClick={() => navigateTo('MealTracking')} className="bg-yellow-400 text-gray-900 font-bold py-3 px-6 rounded-lg hover:bg-yellow-500 transition duration-300">
+                        Track Your Meal
+                    </button>
+                    <button onClick={() => navigateTo('InvoiceGenerator')} className="bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition duration-300">
+                        View Invoice
+                    </button>
+                </div>
+                 <button onClick={() => navigateTo('SubscriptionPlan')} className="mt-6 text-yellow-500 font-semibold hover:underline">
+                    Place a New Order
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// Invoice Generator
+const InvoiceGenerator = ({ navigateTo, order, user }) => {
+    const totalAmount = parseFloat(order.subscription.price);
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Invoice" onBack={() => navigateTo('OrderConfirmation')} />
+            <div className="p-4 md:p-8 max-w-3xl mx-auto">
+                <div className="bg-white p-8 rounded-lg shadow-lg" id="invoice">
+                    <div className="flex justify-between items-start mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-yellow-400">gharSe!</h1>
+                            <p className="text-gray-500">Invoice #{Math.floor(1000 + Math.random() * 9000)}</p>
+                            <p className="text-gray-500">Date: {new Date().toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                            <h2 className="text-xl font-semibold">Bill To:</h2>
+                            <p>{user.name}</p>
+                            <p>{user.email}</p>
+                            <p>{order.address.line1}, {order.address.city}</p>
+                        </div>
+                    </div>
+                    <table className="w-full mb-8">
+                        <thead>
+                            <tr className="bg-gray-100">
+                                <th className="text-left p-3 font-semibold text-gray-700">Description</th>
+                                <th className="text-right p-3 font-semibold text-gray-700">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="p-3 text-gray-800">{order.subscription.name} Plan ({order.meals.length} meals)</td>
+                                <td className="text-right p-3 text-gray-800">₹{order.subscription.price}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div className="flex justify-end">
+                        <div className="w-full md:w-1/2">
+                            <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="text-gray-800">₹{totalAmount.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Tax (0%)</span>
+                                <span className="text-gray-800">₹0.00</span>
+                            </div>
+                            <div className="flex justify-between py-3 font-bold text-xl border-t-2 border-gray-200 mt-2">
+                                <span className="text-gray-900">Total</span>
+                                <span className="text-gray-900">₹{totalAmount.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-center mt-8">
+                    <button onClick={() => window.print()} className="bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 transition duration-300">
+                        Print Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Meal Tracking Component
+const MealTracking = ({ navigateTo, showNotification }) => {
+    const [statusIndex, setStatusIndex] = useState(0);
+    const statuses = ['Order Placed', 'Preparing Meal', 'Out for Delivery', 'Delivered'];
+
+    useEffect(() => {
+        const intervals = [2000, 4000, 6000];
+        const timers = intervals.map((time, index) => 
+            setTimeout(() => {
+                setStatusIndex(index + 1);
+                if (index === 1) {
+                    showNotification('On its way!', 'Your meal is out for delivery.');
+                }
+                if (index === 2) {
+                     showNotification('Delivered!', 'Enjoy your delicious meal from gharSe!');
+                }
+            }, time)
+        );
+        return () => timers.forEach(clearTimeout);
+    }, [showNotification]);
+
+    return (
+        <div className="bg-gray-100 min-h-screen">
+            <Header title="Track Your Meal" onBack={() => navigateTo('OrderConfirmation')} />
+            <div className="p-4 md:p-8 max-w-2xl mx-auto">
+                <div className="bg-white p-8 rounded-lg shadow-lg">
+                    <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">Estimated Arrival: 6:30 PM</h2>
+                    <div className="relative">
+                        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gray-200 transform -translate-x-1/2"></div>
+                        {statuses.map((status, index) => (
+                            <div key={status} className="flex items-center justify-center mb-12 last:mb-0">
+                                <div className={`z-10 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-500 ${index <= statusIndex ? 'bg-yellow-400' : 'bg-gray-300'}`}>
+                                    {index < statusIndex ? (
+                                        <CheckCircle size={24} className="text-gray-900" />
+                                    ) : (
+                                        <Truck size={24} className={index <= statusIndex ? 'text-gray-900' : 'text-gray-500'} />
+                                    )}
+                                </div>
+                                <div className={`absolute ${index % 2 === 0 ? 'left-1/2 ml-12' : 'right-1/2 mr-12'} w-1/3 text-center`}>
+                                    <p className={`font-semibold text-lg ${index <= statusIndex ? 'text-gray-800' : 'text-gray-400'}`}>{status}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// Push Notification (Simulated) Component
+const PushNotification = ({ notification, setNotification }) => {
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => {
+                setNotification(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification, setNotification]);
+
+    if (!notification) return null;
+
+    return (
+        <div className="fixed top-5 right-5 w-80 bg-white rounded-lg shadow-2xl p-4 z-50 animate-pulse">
+            <div className="flex items-start">
+                <div className="flex-shrink-0 pt-0.5">
+                    <Bell className="text-yellow-500" size={24} />
+                </div>
+                <div className="ml-3 w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900">{notification.title}</p>
+                    <p className="mt-1 text-sm text-gray-500">{notification.message}</p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                    <button onClick={() => setNotification(null)} className="inline-flex text-gray-400 hover:text-gray-500">
+                        <span className="sr-only">Close</span>
+                        &times;
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Main App Component
+export default function App() {
+    const [currentPage, setCurrentPage] = useState('UserAuth');
+    const [user, setUser] = useState(null);
+    const [orderData, setOrderData] = useState({});
+    const [notification, setNotification] = useState(null);
+
+    const navigateTo = (page) => setCurrentPage(page);
+
+    const updateOrder = (key, value) => {
+        setOrderData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const showNotification = useCallback((title, message) => {
+        setNotification({ title, message });
+    }, []);
+
+    const renderPage = () => {
+        switch (currentPage) {
+            case 'UserAuth':
+                return <UserAuth navigateTo={navigateTo} setUser={setUser} />;
+            case 'UserOnboarding':
+                return <UserOnboarding navigateTo={navigateTo} user={user} />;
+            case 'PrivacyPolicy':
+                return <PrivacyPolicy navigateTo={navigateTo} />;
+            case 'TermsAndConditions':
+                return <TermsAndConditions navigateTo={navigateTo} />;
+            case 'SubscriptionPlan':
+                return <SubscriptionPlan navigateTo={navigateTo} updateOrder={updateOrder} />;
+            case 'MealPlanBrowser':
+                return <MealPlanBrowser navigateTo={navigateTo} updateOrder={updateOrder} order={orderData} />;
+            case 'AddressManagement':
+                return <AddressManagement navigateTo={navigateTo} updateOrder={updateOrder} order={orderData} />;
+            case 'DeliverySlotPicker':
+                return <DeliverySlotPicker navigateTo={navigateTo} updateOrder={updateOrder} order={orderData} />;
+            case 'PaymentGateway':
+                return <PaymentGateway navigateTo={navigateTo} order={orderData} />;
+            case 'OrderConfirmation':
+                return <OrderConfirmation navigateTo={navigateTo} order={orderData} user={user} showNotification={showNotification} />;
+            case 'InvoiceGenerator':
+                return <InvoiceGenerator navigateTo={navigateTo} order={orderData} user={user} />;
+            case 'MealTracking':
+                return <MealTracking navigateTo={navigateTo} showNotification={showNotification} />;
+            default:
+                return <UserAuth navigateTo={navigateTo} setUser={setUser} />;
+        }
+    };
+
+    return (
+        <div className="font-sans bg-gray-100">
+            <PushNotification notification={notification} setNotification={setNotification} />
+            {renderPage()}
+        </div>
+    );
+}
